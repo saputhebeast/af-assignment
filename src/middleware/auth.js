@@ -2,7 +2,6 @@ import { tracedAsyncHandler } from "@sliit-foss/functions";
 import context from "express-http-context";
 import { errors, verify } from "../utils";
 import { retrievedUserById } from "../repository/user.repository";
-import config from "../config";
 
 const whitelistedRoutes = ["/v1/auth/login", "/v1/auth/verify", "/v1/auth/register", "/v1/auth/refresh-token", "/v1/health"];
 
@@ -24,9 +23,6 @@ export const authorizer = tracedAsyncHandler(async function authorizer(req) {
 
 export const hasAnyRole = (roles) => {
   return (req, res, next) => {
-    // if (config.APP_ENV === "test") {
-    //   return next();
-    // }
     const user = context.get("user");
     if (!user || !user.role || !roles.includes(user.role)) {
       throw errors.invalid_permission;
