@@ -1,0 +1,13 @@
+test
+node_modules
+logs
+
+README.md
+
+.github
+.eslintcache
+.eslintrc
+.gitignore
+.prettierignore
+.prettierrc
+.env.example
