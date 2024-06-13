@@ -2,6 +2,7 @@ import express from "express";
 import { celebrate, Segments } from "celebrate";
 import { traced, tracedAsyncHandler } from "@sliit-foss/functions";
 import { default as filterQuery } from "@sliit-foss/mongoose-filter-query";
+import context from "express-http-context";
 import { response } from "../../utils";
 import { hasAnyRole } from "../../middleware";
 import { addClassroomSchema, updateClassroomSchema } from "../../schema/classroom.schema";
@@ -14,7 +15,7 @@ classroom.post(
   hasAnyRole(["ADMIN"]),
   celebrate({ [Segments.BODY]: addClassroomSchema }),
   tracedAsyncHandler(async function addCourseController(req, res) {
-    const classRoom = await traced(addClassroom)(req.body);
+    const classRoom = await traced(addClassroom)(req.body, context.get("user"));
     return response({ res, message: "Classroom added successfully", data: classRoom });
   })
 );
@@ -38,6 +39,7 @@ classroom.get(
 
 classroom.patch(
   "/:id",
+  hasAnyRole(["ADMIN"]),
   celebrate({ [Segments.BODY]: updateClassroomSchema }),
   tracedAsyncHandler(async (req, res) => {
     const classRoom = await traced(updateClassroom)(req.params.id, req.body);
@@ -47,6 +49,7 @@ classroom.patch(
 
 classroom.delete(
   "/:id",
+  hasAnyRole(["ADMIN"]),
   hasAnyRole(["ADMIN"]),
   tracedAsyncHandler(async (req, res) => {
     const classRoom = await traced(deleteClassroom)(req.params.id);

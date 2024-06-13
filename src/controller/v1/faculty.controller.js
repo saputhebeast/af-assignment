@@ -39,6 +39,7 @@ faculty.get(
 
 faculty.patch(
   "/:id",
+  hasAnyRole(["ADMIN"]),
   celebrate({ [Segments.BODY]: updateFacultySchema }),
   tracedAsyncHandler(async (req, res) => {
     const faculty = await traced(updateFaculty)(req.params.id, req.body);
@@ -48,6 +49,7 @@ faculty.patch(
 
 faculty.delete(
   "/:id",
+  hasAnyRole(["ADMIN"]),
   hasAnyRole(["ADMIN"]),
   tracedAsyncHandler(async (req, res) => {
     const faculty = await traced(deleteFaculty)(req.params.id);

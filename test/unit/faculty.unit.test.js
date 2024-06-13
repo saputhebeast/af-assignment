@@ -92,8 +92,8 @@ describe("Faculty Unit Tests", () => {
 
   describe("deleteFaculty", () => {
     it("success", async () => {
-      const user = await createUser("Super Admin", "superadmindeletefac@gmail.com", "ADMIN");
-      const addedFaculty = await createFaculty("Faculty of Delete", user);
+      const user = await createUser("Super Admin", "superadmindeletefaculty@gmail.com", "ADMIN");
+      const addedFaculty = await createFaculty("Faculty of Deleted", user);
 
       const deletedFaculty = await deleteFaculty(addedFaculty["_id"]);
       expect(deletedFaculty).toBeDefined();

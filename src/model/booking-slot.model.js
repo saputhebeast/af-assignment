@@ -24,6 +24,10 @@ const bookingSlotSchema = new Schema(
     is_active: {
       type: Boolean,
       default: true
+    },
+    classroom: {
+      type: Schema.Types.ObjectId,
+      ref: "Classroom"
     }
   },
   {

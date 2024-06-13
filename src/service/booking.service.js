@@ -1,13 +1,13 @@
-import context from "express-http-context";
 import { traced } from "@sliit-foss/functions";
 import { deleteBookingById, retrieveBookingById, retrieveBookings, saveBooking, updateBookingById } from "../repository/booking.repository";
 import { errors } from "../utils";
-import { getBookingSlotsByBookingId, updateBookingSlotsActiveStatusToFalse } from "../repository/booking-slot.repository";
+import { deleteBookingSlotsByBookingId, getBookingSlotsByBookingId, updateBookingSlotsActiveStatusToFalse } from "../repository/booking-slot.repository";
 import { deleteTimeTableSlotsByBookingId, saveTimetable } from "../repository/timetable.repository";
+import { getAdmin } from "../repository/user.repository";
 import { addBookingSlots, checkOverlapping, deactivateBookingSlotsByBookingId } from "./booking-slot.service";
+import { addNotification } from "./notification.service";
 
-export const addBooking = async (booking) => {
-  const user = context.get("user");
+export const addBooking = async (booking, user) => {
   booking.created_by = user._id;
   if (booking.booking_type === "FULL_DAY") {
     booking.end_datetime = booking.start_datetime;
@@ -26,6 +26,7 @@ export const addBooking = async (booking) => {
 
   const savedBooking = await traced(saveBooking)(booking);
   await traced(addBookingSlots)(savedBooking);
+  await traced(addNotification)({ receipt: user._id, title: "Booking Create!", message: "Your booking created successfully!", type: "BOOKING" }, user);
   return savedBooking;
 };
 
@@ -37,16 +38,40 @@ const isWithinTimeLimit = (booking) => {
   return timeDifferenceInHours <= 4;
 };
 
-export const getBooking = (id) => {
-  return traced(retrieveBookingById)(id);
+export const getBooking = async (id) => {
+  const booking = await traced(retrieveBookingById)(id);
+  if (booking === null) {
+    throw errors.booking_not_found;
+  }
+  return booking;
 };
 
 export const getBookings = (filters, sorts, page, limit) => {
   return traced(retrieveBookings)(filters, sorts, page, limit);
 };
 
+export const updateBooking = async (id, payload) => {
+  const booking = await traced(retrieveBookingById)(id);
+  if (booking === null) {
+    throw errors.booking_not_found;
+  }
+  if (booking.booking_status !== "PENDING") {
+    throw errors.booking_cannot_update;
+  }
+
+  await traced(deleteBookingSlotsByBookingId)(booking._id);
+
+  const updatedBooking = await traced(updateBookingById)(id, payload);
+  await traced(addBookingSlots)(updatedBooking);
+
+  const superAdmin = await traced(getAdmin)();
+  await traced(addNotification)({ receipt: booking.created_by, title: "Booking Updated!", message: "Your booking has been updated successfully!", type: "BOOKING" }, superAdmin);
+
+  return updatedBooking;
+};
+
 export const updateBookingStatus = async (id, payload) => {
-  if (payload.booking_status === "CONFIRMED") {
+  if (payload.booking_status === "APPROVED") {
     // get booking
     const booking = await traced(retrieveBookingById)(id);
     if (booking === null) {
@@ -74,7 +99,10 @@ export const updateBookingStatus = async (id, payload) => {
     }
 
     // update booking
-    await traced(updateBookingById)(id, { booking_status: "CONFIRMED" });
+    await traced(updateBookingById)(id, { booking_status: "APPROVED" });
+
+    const superAdmin = await traced(getAdmin)();
+    await traced(addNotification)({ receipt: booking.created_by, title: "Booking Updated!", message: "Your booking has been updated successfully!", type: "BOOKING" }, superAdmin);
   } else if (payload.booking_status === "REJECTED") {
     // update booking and booking slot to rejected and is_active: false
     await traced(updateBookingById)(id, payload);
@@ -90,11 +118,14 @@ export const deleteBooking = async (id) => {
   const booking_status = booking["booking_status"];
 
   // check booking status
-  // if confirmed, update status as deleted and inactive, and update booking slots to inactive and delete timetable records
+  // if APPROVED, update status as deleted and inactive, and update booking slots to inactive and delete timetable records
   // if pending, update status as deleted and inactive, and update booking slots to inactive
-  if (booking_status === "CONFIRMED") {
+  if (booking_status === "APPROVED") {
     await traced(deleteTimeTableSlotsByBookingId)(id);
   }
   await traced(deleteBookingById)(id);
   await traced(updateBookingSlotsActiveStatusToFalse)(id);
+
+  const superAdmin = await traced(getAdmin)();
+  await traced(addNotification)({ receipt: booking.created_by, title: "Booking Deleted!", message: "Your booking has been deleted by the admin!", type: "BOOKING" }, superAdmin);
 };

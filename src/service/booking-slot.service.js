@@ -9,7 +9,8 @@ export const addBookingSlots = async (booking) => {
       start_datetime: start_datetime,
       end_datetime: end_datetime,
       booking: booking._id,
-      created_by: booking.created_by
+      created_by: booking.created_by,
+      classroom: booking.classroom
     };
     await traced(saveBookingSlot)(bookingSlot);
   } else {
@@ -25,7 +26,8 @@ export const addBookingSlots = async (booking) => {
         start_datetime: startDate,
         end_datetime: adjustedEndDate,
         booking: booking._id,
-        created_by: booking.created_by
+        created_by: booking.created_by,
+        classroom: booking.classroom
       };
       await traced(saveBookingSlot)(bookingSlot);
 

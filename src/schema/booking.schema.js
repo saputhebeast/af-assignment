@@ -29,8 +29,37 @@ export const addBookingSchema = Joi.object({
   })
 });
 
+export const updateBookingSchema = Joi.object({
+  title: Joi.string().required(),
+  event_type: Joi.string().valid("LECTURE", "EVENT", "CONFERENCE", "WORKSHOP").required(),
+  description: Joi.string().optional(),
+  classroom: Joi.string().required(),
+  course: Joi.string().required(),
+  faculty: Joi.string().required(),
+  booking_type: Joi.string().valid("FULL_DAY", "NOT_FULL_DAY").required(),
+  start_datetime: Joi.date().required(),
+  end_datetime: Joi.date().when("booking_type", {
+    is: "FULL_DAY",
+    then: Joi.date()
+      .timestamp("javascript")
+      .default(() => new Date().setHours(24, 0, 0, 0)),
+    otherwise: Joi.date().required()
+  }),
+  recurring: Joi.boolean().required(),
+  recurring_type: Joi.when("recurring", {
+    is: true,
+    then: Joi.string().valid("WEEKLY", "BI_WEEKLY", "MONTHLY").required(),
+    otherwise: Joi.forbidden()
+  }),
+  recurring_to: Joi.when("recurring", {
+    is: true,
+    then: Joi.string().required(),
+    otherwise: Joi.forbidden()
+  })
+});
+
 export const reviewBookingSchema = Joi.object({
-  booking_status: Joi.string().valid("CONFIRMED", "REJECTED").required()
+  booking_status: Joi.string().valid("APPROVED", "REJECTED").required()
 });
 
 // {

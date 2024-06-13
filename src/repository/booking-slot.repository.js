@@ -27,6 +27,10 @@ export const updateBookingSlotsActiveStatusToFalse = (id) => {
   return BookingSlot.updateMany({ booking: id }, { is_active: false }, { new: true }).lean();
 };
 
+export const deleteBookingSlotsByBookingId = (id) => {
+  return BookingSlot.deleteMany({ booking: id }).lean();
+};
+
 export const getBookingSlotsByBookingId = (id) => {
-  return BookingSlot.find({ booking: id });
+  return BookingSlot.find({ booking: id, is_active: true });
 };

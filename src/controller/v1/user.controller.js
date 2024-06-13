@@ -48,6 +48,7 @@ user.patch(
 user.delete(
   "/:id",
   hasAnyRole(["ADMIN"]),
+  hasAnyRole(["ADMIN"]),
   tracedAsyncHandler(async (req, res) => {
     const user = await traced(deleteUser)(req.params.id);
     return response({ res, message: "User deleted successfully", data: user });

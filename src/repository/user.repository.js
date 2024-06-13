@@ -26,3 +26,7 @@ export const updateUserById = (id, user) => {
 export const deleteUserById = (id) => {
   return User.findByIdAndUpdate(id, { is_active: false }, { new: true }).lean();
 };
+
+export const getAdmin = () => {
+  return User.findOne({ role: "ADMIN" });
+};

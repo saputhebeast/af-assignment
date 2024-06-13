@@ -12,7 +12,7 @@ const course = express.Router();
 
 course.post(
   "/",
-  hasAnyRole(["ADMIN"]),
+  hasAnyRole(["ADMIN", "FACULTY"]),
   celebrate({ [Segments.BODY]: addCourseSchema }),
   tracedAsyncHandler(async function addCourseController(req, res) {
     const course = await traced(addCourse)(req.body, context.get("user"));
@@ -39,6 +39,7 @@ course.get(
 
 course.patch(
   "/:id",
+  hasAnyRole(["ADMIN", "FACULTY"]),
   celebrate({ [Segments.BODY]: updateCourseSchema }),
   tracedAsyncHandler(async (req, res) => {
     const course = await traced(updateCourse)(req.params.id, req.body);
@@ -48,7 +49,7 @@ course.patch(
 
 course.delete(
   "/:id",
-  hasAnyRole(["ADMIN"]),
+  hasAnyRole(["ADMIN", "FACULTY"]),
   tracedAsyncHandler(async (req, res) => {
     const course = await traced(deleteCourse)(req.params.id);
     return response({ res, message: "Course deleted successfully", data: course });

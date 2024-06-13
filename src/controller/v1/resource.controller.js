@@ -2,6 +2,7 @@ import express from "express";
 import { celebrate, Segments } from "celebrate";
 import { traced, tracedAsyncHandler } from "@sliit-foss/functions";
 import { default as filterQuery } from "@sliit-foss/mongoose-filter-query";
+import context from "express-http-context";
 import { response } from "../../utils";
 import { hasAnyRole } from "../../middleware";
 import { addResourceSchema, updateResourceSchema } from "../../schema/resource.schema";
@@ -14,7 +15,7 @@ resource.post(
   hasAnyRole(["ADMIN"]),
   celebrate({ [Segments.BODY]: addResourceSchema }),
   tracedAsyncHandler(async function addCourseController(req, res) {
-    const resource = await traced(addResource)(req.body);
+    const resource = await traced(addResource)(req.body, context.get("user"));
     return response({ res, message: "Resource added successfully", data: resource });
   })
 );
@@ -38,6 +39,7 @@ resource.get(
 
 resource.patch(
   "/:id",
+  hasAnyRole(["ADMIN"]),
   celebrate({ [Segments.BODY]: updateResourceSchema }),
   tracedAsyncHandler(async (req, res) => {
     const resource = await traced(updateResource)(req.params.id, req.body);
@@ -47,6 +49,7 @@ resource.patch(
 
 resource.delete(
   "/:id",
+  hasAnyRole(["ADMIN"]),
   hasAnyRole(["ADMIN"]),
   tracedAsyncHandler(async (req, res) => {
     const resource = await traced(deleteResource)(req.params.id);

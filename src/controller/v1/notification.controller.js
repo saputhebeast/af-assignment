@@ -2,6 +2,7 @@ import express from "express";
 import { celebrate, Segments } from "celebrate";
 import { traced, tracedAsyncHandler } from "@sliit-foss/functions";
 import { default as filterQuery } from "@sliit-foss/mongoose-filter-query";
+import context from "express-http-context";
 import { response } from "../../utils";
 import { hasAnyRole } from "../../middleware";
 import { addNotificationSchema, updateNotificationSchema } from "../../schema/notification.schema";
@@ -14,7 +15,7 @@ notification.post(
   hasAnyRole(["ADMIN"]),
   celebrate({ [Segments.BODY]: addNotificationSchema }),
   tracedAsyncHandler(async function addNotificationController(req, res) {
-    const notification = await traced(addNotification)(req.body);
+    const notification = await traced(addNotification)(req.body, context.get("user"));
     return response({ res, message: "Notification added successfully", data: notification });
   })
 );
@@ -48,7 +49,7 @@ notification.patch(
 notification.delete(
   "/",
   tracedAsyncHandler(async (req, res) => {
-    const notification = await traced(clearAllNotifications)();
+    const notification = await traced(clearAllNotifications)(context.get("user"));
     return response({ res, message: "Notifications deleted successfully", data: notification });
   })
 );

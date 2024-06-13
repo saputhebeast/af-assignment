@@ -2,6 +2,7 @@ import express from "express";
 import { celebrate, Segments } from "celebrate";
 import { traced, tracedAsyncHandler } from "@sliit-foss/functions";
 import { default as filterQuery } from "@sliit-foss/mongoose-filter-query";
+import context from "express-http-context";
 import { response } from "../../utils";
 import { hasAnyRole } from "../../middleware";
 import { addEnrollmentSchema, updateEnrollmentSchema } from "../../schema/enrollment.schema";
@@ -11,10 +12,10 @@ const enrollment = express.Router();
 
 enrollment.post(
   "/",
-  hasAnyRole(["ADMIN"]),
+  hasAnyRole(["ADMIN", "FACULTY"]),
   celebrate({ [Segments.BODY]: addEnrollmentSchema }),
   tracedAsyncHandler(async function addCourseController(req, res) {
-    const enrollment = await traced(addEnrollment)(req.body);
+    const enrollment = await traced(addEnrollment)(req.body, context.get("user"));
     return response({ res, message: "Enrollment added successfully", data: enrollment });
   })
 );
@@ -24,7 +25,7 @@ enrollment.get(
   filterQuery,
   tracedAsyncHandler(async (req, res) => {
     const enrollment = await traced(getEnrollments)(req.query.filter, req.query.sort, req.query.page, req.query.limit);
-    return response({ res, message: "Enrollment retrieved successfully", data: enrollment });
+    return response({ res, message: "Enrollments retrieved successfully", data: enrollment });
   })
 );
 
@@ -38,6 +39,7 @@ enrollment.get(
 
 enrollment.patch(
   "/:id",
+  hasAnyRole(["ADMIN", "FACULTY"]),
   celebrate({ [Segments.BODY]: updateEnrollmentSchema }),
   tracedAsyncHandler(async (req, res) => {
     const enrollment = await traced(updateEnrollment)(req.params.id, req.body);
